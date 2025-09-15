@@ -7,7 +7,11 @@ import numpy as np
 
 import astropy.units as u
 from astropy.coordinates import CartesianRepresentation
-from astropy.visualization import AsinhStretch, ImageNormalize
+from astropy.visualization import (
+    AsinhStretch,
+    ImageNormalize,
+    AsymmetricPercentileInterval
+)
 
 from sunpy.coordinates import HeliocentricInertial
 from sunpy.map import GenericMap
