@@ -80,18 +80,19 @@ class EUIMap(GenericMap):
         return is_solo and is_eui
 
 
-
 class METISMap(GenericMap):
     """
     Metis Image Map
 
-    Metis is the multi-wavelength coronagraph for the Solar Orbiter mission that
-    investigates the global corona in polarized visible light and in ultraviolet
-    light. In the ultraviolet band, the coronagraph obtains monochromatic images
-    in the Lyman-alpha line, at 121.6 nm, emitted by the few neutral-hydrogen
-    atoms surviving in the hot corona.
+    Metis is the multi-wavelength coronagraph on board the Solar Orbiter mission,
+    dedicated to the study of the solar corona. It observes the outer atmosphere
+    of the Sun simultaneously in:
+    - Total and polarized visible light (580–640 nm), scattered by free electrons
+    through the Thomson scattering
+    - Ultraviolet band in the hydrogen Lyman-alpha line (121.6 nm), emitted by
+    the few neutral hydrogen atoms surviving in the hot corona.
 
-    By simulating a solar eclipse, Metis observes the faint coronal light in an
+    By occulting the solar disk, Metis observes the faint coronal emission in an
     annular zone 1.6-2.9 deg wide, around the disk center. When Solar Orbiter
     is at its closest approach to the Sun, at the minimum perihelion of 0.28
     astronomical units, the annular zone is within 1.7 and 3.1 solar radii from
@@ -103,7 +104,7 @@ class METISMap(GenericMap):
     ----------
     * `Solar Orbiter Mission Page <https://sci.esa.int/web/solar-orbiter/>`_
     * `Metis Instrument Page <https://metis.oato.inaf.it/index.html>`_
-    * Instrument Paper: Antonucci et al. 2020, A&A, 642, A10
+    * Antonucci et al. 2020, A&A, 642, A10
     """
 
     def __init__(self, data, header, **kwargs):
@@ -137,16 +138,16 @@ class METISMap(GenericMap):
         """
 
         btype_suff_dict = {
-            'VL total brightness':             ('-TB', '-TB'),
-            'VL polarized brightness':         ('-PB', '-PB'),
+            'VL total brightness': ('-TB', '-TB'),
+            'VL polarized brightness': ('-PB', '-PB'),
             'VL fixed-polarization intensity': ('-FP', '-Fix. Pol.'),
-            'VL polarization angle':           ('-PA', '-Pol. Angle'),
-            'Stokes I':                        ('-SI', '-Stokes I'),
-            'Stokes Q':                        ('-SQ', '-Stokes Q'),
-            'Stokes U':                        ('-SU', '-Stokes U'),
-            'Pixel quality':                   ('-PQ', '-Pixel quality'),
-            'Absolute error':                  ('-AE', '-Abs. err.'),
-            'UV Lyman-alpha intensity':        ('', ''),
+            'VL polarization angle': ('-PA', '-Pol. Angle'),
+            'Stokes I': ('-SI', '-Stokes I'),
+            'Stokes Q': ('-SQ', '-Stokes Q'),
+            'Stokes U': ('-SU', '-Stokes U'),
+            'Pixel quality': ('-PQ', '-Pixel quality'),
+            'Absolute error': ('-AE', '-Abs. err.'),
+            'UV Lyman-alpha intensity': ('', ''),
         }
 
         btype = self.meta['btype']
@@ -163,16 +164,13 @@ class METISMap(GenericMap):
 
         return prodtype
 
-
     @property
     def prodtype(self):
         return self._prodtype
 
-
     @prodtype.setter
     def prodtype(self, value):
         raise AttributeError('Cannot manually set prodtype for METISMap')
-
 
     def get_contr_cut(self):
         """
@@ -184,41 +182,26 @@ class METISMap(GenericMap):
             Contrast of the Metis data product.
 
         """
-        if 'L2' in self.meta['level']:
-            if self.prodtype == 'VL-TB' or self.prodtype == 'VL-SI':
-                contr_cut = 0.05
-            elif self.prodtype == 'VL-PB':
-                contr_cut = 0.005
-            elif self.prodtype == 'VL-FP':
-                contr_cut = 0.01
-            elif self.prodtype == 'VL-PA':
-                contr_cut = 0.01
-            elif self.prodtype == 'VL-SQ':
-                contr_cut = 0.01
-            elif self.prodtype == 'VL-SU':
-                contr_cut = 0.01
-            elif self.prodtype == 'UV':
-                contr_cut = 0.05  # 0.03
-            elif self.prodtype == 'VL-PQ' or self.prodtype == 'UV-PQ':
-                contr_cut = None
-            elif self.prodtype == 'VL-AE' or self.prodtype == 'UV-AE':
-                contr_cut = 0.1
-            else:
-                contr_cut = None
-        else:
-            contr_cut = None
-        return contr_cut
+        contr_cut_dict = {
+            'VL-TB': 0.05, 'VL-PB': 0.005, 'VL-FP': 0.01, 'VL-PA': 0.01,
+            'VL-SQ': 0.01, 'VL-SU': 0.01, 'UV': 0.05, 'VL-PQ': 0.0, 'VL-AE': 0.1
+        }
+        contr_cut_dict['VL-SI'] = contr_cut_dict['VL-TB']
+        contr_cut_dict['UV-PQ'] = contr_cut_dict['VL-PQ']
+        contr_cut_dict['UV-AE'] = contr_cut_dict['VL-AE']
 
+        contr_cut = contr_cut_dict.get(self.prodtype, 0.0) \
+            if 'L2' in self.meta['level'] else 0.0
+
+        return contr_cut
 
     @property
     def contr_cut(self):
         return self._contr_cut
 
-
     @contr_cut.setter
     def contr_cut(self, value):
         self._contr_cut = value
-
 
     @classmethod
     def is_datasource_for(cls, data, header, **kwargs):
@@ -234,8 +217,8 @@ class METISMap(GenericMap):
         """
         instrume = header.get('INSTRUME', '').strip().upper()
         obsrvtry = header.get('OBSRVTRY', '').strip().upper()
-        return ('METIS' in instrume) and ('SOLAR ORBITER' in obsrvtry)
 
+        return ('METIS' in instrume) and ('SOLAR ORBITER' in obsrvtry)
 
     def get_fov_rsun(self):
         """
@@ -253,8 +236,8 @@ class METISMap(GenericMap):
         rmax_rsun = self.meta['out_fov'] / rsun_deg  # in rsun
         board_deg = 2.9  # deg
         board_rsun = board_deg / rsun_deg  # in rsun
-        return rmin_rsun, rmax_rsun, board_rsun
 
+        return rmin_rsun, rmax_rsun, board_rsun
 
     def mask_occs(self, mask_val=np.nan):
         """
@@ -268,10 +251,9 @@ class METISMap(GenericMap):
 
         """
         if self.meta['cdelt1'] != self.meta['cdelt2']:
-            warnings.warn('Warning: CDELT1 != CDELT2 for {fname}'.format(
+            warnings.warn('Warning: CDELT1 != CDELT2 for {fname}. Exiting mask_occs method...'.format(
                 fname=self.meta['filename'])
             )
-            print('\t>>> exiting mask_occs method.')
             return
 
         inn_fov = self.meta['inn_fov'] * 3600 / self.meta['cdelt1']  # in pix
@@ -287,7 +269,6 @@ class METISMap(GenericMap):
         )
         self.data[dist_iocen < inn_fov] = mask_val
         self.data[dist_suncen > out_fov] = mask_val
-
 
     def mask_bad_pix(self, qmat, mask_val=np.nan):
         """
@@ -306,12 +287,10 @@ class METISMap(GenericMap):
         """
 
         if qmat.shape != self.data.shape:
-            warnings.warn('Warning: Pixel quality matrix and the METISMap data have different size')
-            print('\t>>> exiting mask_bad_pix method.')
+            warnings.warn('Warning: Pixel quality matrix and the METISMap data have different size. Exiting mask_bad_pix method...')
             return
         qmat_mask = qmat == 1
         self.data[~qmat_mask] = mask_val
-
 
     def _get_cmap_name(self):
         """
@@ -325,13 +304,12 @@ class METISMap(GenericMap):
         """
 
         cmap_string = '{obsv}{instr}{prod}'.format(
-            obsv=self.observatory, # self.observatory.replace(' ', '_'),
+            obsv='solo',  # self.observatory, # self.observatory.replace(' ', '_'),
             instr=self.instrument,
             prod=self.prodtype
         )
         cmap_string = cmap_string.lower()
         return cmap_string
-
 
     def get_img_vlim(self):
         """
@@ -347,8 +325,8 @@ class METISMap(GenericMap):
         vlim = AsymmetricPercentileInterval(
             self.contr_cut*100, (1-self.contr_cut)*100
         ).get_limits(self.data)
-        return vlim
 
+        return vlim
 
     def plot(self, **kwargs):
         """
@@ -361,4 +339,5 @@ class METISMap(GenericMap):
             clip_interval = None
         else:
             clip_interval = [self.contr_cut*100, (1-self.contr_cut)*100] * u.percent
+
         return super().plot(clip_interval=clip_interval, **kwargs)
