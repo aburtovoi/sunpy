@@ -147,6 +147,7 @@ class METISMap(GenericMap):
             'Stokes U': ('-SU', '-Stokes U'),
             'Pixel quality': ('-PQ', '-Pixel quality'),
             'Absolute error': ('-AE', '-Abs. err.'),
+            'Relative error': ('-RE', '-Rel. err.'),
             'UV Lyman-alpha intensity': ('', ''),
         }
 
@@ -184,11 +185,13 @@ class METISMap(GenericMap):
         """
         contr_cut_dict = {
             'VL-TB': 0.05, 'VL-PB': 0.005, 'VL-FP': 0.01, 'VL-PA': 0.01,
-            'VL-SQ': 0.01, 'VL-SU': 0.01, 'UV': 0.05, 'VL-PQ': 0.0, 'VL-AE': 0.1
+            'VL-SQ': 0.01, 'VL-SU': 0.01, 'UV': 0.05, 'VL-PQ': 0.0,
+            'VL-AE': 0.1, 'VL-RE': 0.02
         }
         contr_cut_dict['VL-SI'] = contr_cut_dict['VL-TB']
         contr_cut_dict['UV-PQ'] = contr_cut_dict['VL-PQ']
         contr_cut_dict['UV-AE'] = contr_cut_dict['VL-AE']
+        contr_cut_dict['UV-RE'] = contr_cut_dict['VL-RE']
 
         contr_cut = contr_cut_dict.get(self.prodtype, 0.0) \
             if 'L2' in self.meta['level'] else 0.0
@@ -261,14 +264,22 @@ class METISMap(GenericMap):
         x = np.arange(0, self.meta['naxis1'], 1)
         y = np.arange(0, self.meta['naxis2'], 1)
         xx, yy = np.meshgrid(x, y, sparse=True)
-        dist_suncen = np.sqrt(
-            (xx-self.meta['sun_xcen'])**2 + (yy-self.meta['sun_ycen'])**2
-        )
-        dist_iocen = np.sqrt(
-            (xx-self.meta['io_xcen'])**2 + (yy-self.meta['io_ycen'])**2
-        )
-        self.data[dist_iocen < inn_fov] = mask_val
-        self.data[dist_suncen > out_fov] = mask_val
+        in_xcen = self.meta['io_xcen']
+        in_ycen = self.meta['io_ycen']
+        dist_inncen = np.sqrt((xx-in_xcen)**2 + (yy-in_ycen)**2)
+        if self.meta['fs_xcen'] == self.meta['crpix1'] \
+                and self.meta['fs_ycen'] == self.meta['crpix2']:
+            ### For the DR1 data fs_*cen keywords are not defined correctly
+            out_xcen = self.meta['sun_xcen']
+            out_ycen = self.meta['sun_ycen']
+        else:
+            out_xcen = self.meta['fs_xcen']
+            out_ycen = self.meta['fs_ycen']
+        print('\n', '***', out_xcen, out_ycen, '\n')
+        dist_outcen = np.sqrt((xx-out_xcen)**2 + (yy-out_ycen)**2)
+
+        self.data[dist_inncen <= inn_fov] = mask_val
+        self.data[dist_outcen >= out_fov] = mask_val
 
     def mask_bad_pix(self, qmat, mask_val=np.nan):
         """
