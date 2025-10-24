@@ -124,6 +124,7 @@ class METISMap(GenericMap):
         self._nickname = f"{self.instrument}/{self.meta['filter']}"
         self._prodtype = self.get_prodtype()
         self._contr_cut = self.get_contr_cut()
+        self.update_plot_norm_settings()
         self.plot_settings['cmap'] = self._get_cmap_name()
 
     def get_prodtype(self):
@@ -206,6 +207,15 @@ class METISMap(GenericMap):
     def contr_cut(self, value):
         self._contr_cut = value
 
+    def update_plot_norm_settings(self):
+        """
+        Updates vmin and vmax values of plot_settings['norm']
+        """
+        img_vlim = self.get_img_vlim()
+        self.plot_settings['norm'] = ImageNormalize(
+            vmin=img_vlim[0], vmax=img_vlim[1]
+        )
+
     @classmethod
     def is_datasource_for(cls, data, header, **kwargs):
         """
@@ -281,6 +291,8 @@ class METISMap(GenericMap):
         self.data[dist_inncen <= inn_fov] = mask_val
         self.data[dist_outcen >= out_fov] = mask_val
 
+        self.update_plot_norm_settings()
+
     def mask_bad_pix(self, qmat, mask_val=np.nan):
         """
         Mask bad-quality pixels in the Metis image.
@@ -302,6 +314,7 @@ class METISMap(GenericMap):
             return
         qmat_mask = qmat == 1
         self.data[~qmat_mask] = mask_val
+        self.update_plot_norm_settings()
 
     def _get_cmap_name(self):
         """
@@ -338,17 +351,3 @@ class METISMap(GenericMap):
         ).get_limits(self.data)
 
         return vlim
-
-    def plot(self, **kwargs):
-        """
-        Override the default implementation to handle Metis color maps and
-        contrast.
-
-        """
-
-        if self.contr_cut is None:
-            clip_interval = None
-        else:
-            clip_interval = [self.contr_cut*100, (1-self.contr_cut)*100] * u.percent
-
-        return super().plot(clip_interval=clip_interval, **kwargs)
