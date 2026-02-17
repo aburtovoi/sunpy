@@ -7,17 +7,13 @@ import numpy as np
 
 import astropy.units as u
 from astropy.coordinates import CartesianRepresentation
-from astropy.visualization import (
-    AsinhStretch,
-    ImageNormalize,
-    AsymmetricPercentileInterval
-)
+from astropy.visualization import AsinhStretch, ImageNormalize, AsymmetricPercentileInterval
 
 from sunpy.coordinates import HeliocentricInertial
 from sunpy.map import GenericMap
 from sunpy.map.sources.source_type import source_stretch
 
-__all__ = ['EUIMap', 'METISMap']
+__all__ = ["EUIMap", "METISMap"]
 
 
 class EUIMap(GenericMap):
@@ -41,18 +37,17 @@ class EUIMap(GenericMap):
     def __init__(self, data, header, **kwargs):
         super().__init__(data, header, **kwargs)
         self._nickname = self.detector
-        self.plot_settings['norm'] = ImageNormalize(
-            stretch=source_stretch(self.meta, AsinhStretch(0.01)), clip=False)
+        self.plot_settings["norm"] = ImageNormalize(stretch=source_stretch(self.meta, AsinhStretch(0.01)), clip=False)
 
     @property
     def _rotation_matrix_from_crota(self):
-        return super()._rotation_matrix_from_crota(crota_key='CROTA')
+        return super()._rotation_matrix_from_crota(crota_key="CROTA")
 
     @property
     def processing_level(self):
-        if self.meta.get('level'):
+        if self.meta.get("level"):
             # The level number is prepended by the letter L
-            return int(self.meta.get('level')[1:])
+            return int(self.meta.get("level")[1:])
 
     @property
     def waveunit(self):
@@ -64,19 +59,25 @@ class EUIMap(GenericMap):
 
     @property
     def _supported_observer_coordinates(self):
-        return [(('hcix_obs', 'hciy_obs', 'hciz_obs'),
-                 {'x': self.meta.get('hcix_obs'),
-                  'y': self.meta.get('hciy_obs'),
-                  'z': self.meta.get('hciz_obs'),
-                  'unit': u.m,
-                  'representation_type': CartesianRepresentation,
-                  'frame': HeliocentricInertial})] + super()._supported_observer_coordinates
+        return [
+            (
+                ("hcix_obs", "hciy_obs", "hciz_obs"),
+                {
+                    "x": self.meta.get("hcix_obs"),
+                    "y": self.meta.get("hciy_obs"),
+                    "z": self.meta.get("hciz_obs"),
+                    "unit": u.m,
+                    "representation_type": CartesianRepresentation,
+                    "frame": HeliocentricInertial,
+                },
+            )
+        ] + super()._supported_observer_coordinates
 
     @classmethod
     def is_datasource_for(cls, data, header, **kwargs):
         """Determines if header corresponds to an EUI image"""
-        is_solo = 'solar orbiter' in str(header.get('obsrvtry', '')).lower()
-        is_eui = str(header.get('instrume', '')).startswith('EUI')
+        is_solo = "solar orbiter" in str(header.get("obsrvtry", "")).lower()
+        is_eui = str(header.get("instrume", "")).startswith("EUI")
         return is_solo and is_eui
 
 
@@ -113,10 +114,10 @@ class METISMap(GenericMap):
         Validate that the header contains the required parameters.
         """
 
-        if 'RSUN_OBS' in header or 'SOLAR_R' in header or 'RADIUS' in header:
+        if "RSUN_OBS" in header or "SOLAR_R" in header or "RADIUS" in header:
             pass
         else:
-            header['RSUN_OBS'] = header['RSUN_ARC']
+            header["RSUN_OBS"] = header["RSUN_ARC"]
 
         # Call the superclass (GenericMap) to initialize the map
         super().__init__(data, header, **kwargs)
@@ -125,7 +126,7 @@ class METISMap(GenericMap):
         self._prodtype = self.get_prodtype()
         self._contr_cut = self.get_contr_cut()
         self.update_plot_norm_settings()
-        self.plot_settings['cmap'] = self._get_cmap_name()
+        self.plot_settings["cmap"] = self._get_cmap_name()
 
     def get_prodtype(self):
         """
@@ -139,30 +140,28 @@ class METISMap(GenericMap):
         """
 
         btype_suff_dict = {
-            'VL total brightness': ('-TB', '-TB'),
-            'VL polarized brightness': ('-PB', '-PB'),
-            'VL fixed-polarization intensity': ('-FP', '-Fix. Pol.'),
-            'VL polarization angle': ('-PA', '-Pol. Angle'),
-            'Stokes I': ('-SI', '-Stokes I'),
-            'Stokes Q': ('-SQ', '-Stokes Q'),
-            'Stokes U': ('-SU', '-Stokes U'),
-            'Pixel quality': ('-PQ', '-Pixel quality'),
-            'Absolute error': ('-AE', '-Abs. err.'),
-            'Relative error': ('-RE', '-Rel. err.'),
-            'UV Lyman-alpha intensity': ('', ''),
+            "VL total brightness": ("-TB", "-TB"),
+            "VL polarized brightness": ("-PB", "-PB"),
+            "VL fixed-polarization intensity": ("-FP", "-Fix. Pol."),
+            "VL polarization angle": ("-PA", "-Pol. Angle"),
+            "Stokes I": ("-SI", "-Stokes I"),
+            "Stokes Q": ("-SQ", "-Stokes Q"),
+            "Stokes U": ("-SU", "-Stokes U"),
+            "Pixel quality": ("-PQ", "-Pixel quality"),
+            "Absolute error": ("-AE", "-Abs. err."),
+            "Relative error": ("-RE", "-Rel. err."),
+            "UV Lyman-alpha intensity": ("", ""),
         }
 
-        btype = self.meta['btype']
-        prodtype = self.meta['filter']
+        btype = self.meta["btype"]
+        prodtype = self.meta["filter"]
 
         if btype in btype_suff_dict:
             suff, nickname_add = btype_suff_dict[btype]
             prodtype += suff
             self._nickname += nickname_add
         else:
-            raise ValueError(
-                f"Error. self.meta['btype']='{btype}' is not known."
-            )
+            raise ValueError(f"Error. self.meta['btype']='{btype}' is not known.")
 
         return prodtype
 
@@ -172,7 +171,7 @@ class METISMap(GenericMap):
 
     @prodtype.setter
     def prodtype(self, value):
-        raise AttributeError('Cannot manually set prodtype for METISMap')
+        raise AttributeError("Cannot manually set prodtype for METISMap")
 
     def get_contr_cut(self):
         """
@@ -181,21 +180,27 @@ class METISMap(GenericMap):
         Returns
         -------
         contr_cut : `float` or `None`
-            Contrast of the Metis data product.
+            Contrast of the Metis data product, used for intensity scaling.
 
         """
         contr_cut_dict = {
-            'VL-TB': 0.05, 'VL-PB': 0.005, 'VL-FP': 0.01, 'VL-PA': 0.01,
-            'VL-SQ': 0.01, 'VL-SU': 0.01, 'UV': 0.05, 'VL-PQ': 0.0,
-            'VL-AE': 0.1, 'VL-RE': 0.02
+            "VL-TB": 0.05,
+            "VL-PB": 0.005,
+            "VL-FP": 0.01,
+            "VL-PA": 0.01,
+            "VL-SQ": 0.01,
+            "VL-SU": 0.01,
+            "UV": 0.05,
+            "VL-PQ": 0.0,
+            "VL-AE": 0.1,
+            "VL-RE": 0.02,
         }
-        contr_cut_dict['VL-SI'] = contr_cut_dict['VL-TB']
-        contr_cut_dict['UV-PQ'] = contr_cut_dict['VL-PQ']
-        contr_cut_dict['UV-AE'] = contr_cut_dict['VL-AE']
-        contr_cut_dict['UV-RE'] = contr_cut_dict['VL-RE']
+        contr_cut_dict["VL-SI"] = contr_cut_dict["VL-TB"]
+        contr_cut_dict["UV-PQ"] = contr_cut_dict["VL-PQ"]
+        contr_cut_dict["UV-AE"] = contr_cut_dict["VL-AE"]
+        contr_cut_dict["UV-RE"] = contr_cut_dict["VL-RE"]
 
-        contr_cut = contr_cut_dict.get(self.prodtype, 0.0) \
-            if 'L2' in self.meta['level'] else 0.0
+        contr_cut = contr_cut_dict.get(self.prodtype, 0.0) if "L2" in self.meta["level"] else 0.0
 
         return contr_cut
 
@@ -205,33 +210,57 @@ class METISMap(GenericMap):
 
     @contr_cut.setter
     def contr_cut(self, value):
+        """
+        Set the contrast cutoff value.
+
+        Parameters
+        ----------
+        value : `float`
+            New contrast cutoff value (0.0 to 1.0).
+
+        Notes
+        -----
+        Changing this value will automatically update plot normalization settings.
+        """
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"contr_cut must be numeric, got {type(value)}")
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(f"contr_cut must be between 0.0 and 1.0, got {value}")
         self._contr_cut = value
+        self.update_plot_norm_settings()
 
     def update_plot_norm_settings(self):
         """
-        Updates vmin and vmax values of plot_settings['norm']
+        Updates vmin and vmax values of plot_settings['norm'] based on current
+        data and contrast cutoff.
         """
         img_vlim = self.get_img_vlim()
-        self.plot_settings['norm'] = ImageNormalize(
-            vmin=img_vlim[0], vmax=img_vlim[1]
-        )
+        self.plot_settings["norm"] = ImageNormalize(vmin=img_vlim[0], vmax=img_vlim[1])
 
     @classmethod
     def is_datasource_for(cls, data, header, **kwargs):
         """
         Determine whether the data is a Metis product.
 
+        Parameters
+        ----------
+        data : `numpy.ndarray`
+            The image data array.
+        header : `dict`
+            The FITS header metadata.
+        **kwargs : `dict`
+            Additional keyword arguments.
+
         Returns
         -------
         `bool`
-            ``True`` if data corresponds to a Metis product, otherwise
-            ``False``.
+            ``True`` if data corresponds to a Metis product, otherwise ``False``.
 
         """
-        instrume = header.get('INSTRUME', '').strip().upper()
-        obsrvtry = header.get('OBSRVTRY', '').strip().upper()
+        instrume = header.get("INSTRUME", "").strip().upper()
+        obsrvtry = header.get("OBSRVTRY", "").strip().upper()
 
-        return ('METIS' in instrume) and ('SOLAR ORBITER' in obsrvtry)
+        return ("METIS" in instrume) and ("SOLAR ORBITER" in obsrvtry)
 
     def get_fov_rsun(self):
         """
@@ -240,15 +269,16 @@ class METISMap(GenericMap):
         Returns
         -------
         `tuple` : `(float, float, float)`
-            Inner, outer radii of the field, determined by the internal
-            occulter, field stop and detector size, respectively.
+            Inner radius, outer radius, and detector board radius of the field,
+            determined by the internal occulter, field stop and detector size,
+            respectively. All values are in units of solar radii.
 
         """
-        rsun_deg = self.rsun_obs.value / 3600.0  # in deg
-        rmin_rsun = self.meta['inn_fov'] / rsun_deg  # in rsun
-        rmax_rsun = self.meta['out_fov'] / rsun_deg  # in rsun
-        board_deg = 2.9  # deg
-        board_rsun = board_deg / rsun_deg  # in rsun
+        rsun_deg = self.rsun_obs.value / 3600.0  # Convert arcsec to deg
+        rmin_rsun = self.meta["inn_fov"] / rsun_deg  # Inner FOV in rsun
+        rmax_rsun = self.meta["out_fov"] / rsun_deg  # Outer FOV in rsun
+        board_deg = 2.9  # Detector board edge in deg
+        board_rsun = board_deg / rsun_deg  # Board radius in rsun
 
         return rmin_rsun, rmax_rsun, board_rsun
 
@@ -256,64 +286,112 @@ class METISMap(GenericMap):
         """
         Mask the data in regions obscured by internal and external occulters.
 
+        This method modifies the data array in-place, setting pixels outside
+        the field of view to the specified mask value.
+
         Parameters
         ----------
         mask_val : `float`, optional
-            The values of masked pixels (outside the field of view). Default is
-            ``np.nan``.
+            The value to assign to masked pixels (outside the field of view).
+            Default is ``np.nan``.
+
+        Notes
+        -----
+        This method directly modifies ``self.data`` in-place. The plot
+        normalization settings are automatically updated after masking.
+
+        Warnings
+        --------
+        If CDELT1 and CDELT2 are not equal (non-square pixels), this method
+        will warn and exit without performing masking, as the circular mask
+        calculation assumes square pixels.
 
         """
-        if self.meta['cdelt1'] != self.meta['cdelt2']:
-            warnings.warn('Warning: CDELT1 != CDELT2 for {fname}. Exiting mask_occs method...'.format(
-                fname=self.meta['filename'])
+        if self.meta["cdelt1"] != self.meta["cdelt2"]:
+            warnings.warn(
+                "Warning: CDELT1 != CDELT2 for {fname}. Exiting mask_occs method...".format(fname=self.meta["filename"])
             )
             return
 
-        inn_fov = self.meta['inn_fov'] * 3600 / self.meta['cdelt1']  # in pix
-        out_fov = self.meta['out_fov'] * 3600 / self.meta['cdelt2']  # in pix
-        x = np.arange(0, self.meta['naxis1'], 1)
-        y = np.arange(0, self.meta['naxis2'], 1)
-        xx, yy = np.meshgrid(x, y, sparse=True)
-        in_xcen = self.meta['io_xcen']
-        in_ycen = self.meta['io_ycen']
-        dist_inncen = np.sqrt((xx-in_xcen)**2 + (yy-in_ycen)**2)
-        if self.meta['fs_xcen'] == self.meta['crpix1'] \
-                and self.meta['fs_ycen'] == self.meta['crpix2']:
-            ### For the DR1 data fs_*cen keywords are not defined correctly
-            out_xcen = self.meta['sun_xcen']
-            out_ycen = self.meta['sun_ycen']
-        else:
-            out_xcen = self.meta['fs_xcen']
-            out_ycen = self.meta['fs_ycen']
-        print('\n', '***', out_xcen, out_ycen, '\n')
-        dist_outcen = np.sqrt((xx-out_xcen)**2 + (yy-out_ycen)**2)
+        # Calculate occulter radii in pixels
+        inn_fov = self.meta["inn_fov"] * 3600 / self.meta["cdelt1"]  # in pix
+        out_fov = self.meta["out_fov"] * 3600 / self.meta["cdelt2"]  # in pix
 
+        # Create coordinate grids
+        x = np.arange(0, self.meta["naxis1"], 1)
+        y = np.arange(0, self.meta["naxis2"], 1)
+        xx, yy = np.meshgrid(x, y, sparse=True)
+
+        # Calculate distance from internal occulter center
+        in_xcen = self.meta["io_xcen"]
+        in_ycen = self.meta["io_ycen"]
+        dist_inncen = np.sqrt((xx - in_xcen) ** 2 + (yy - in_ycen) ** 2)
+
+        # Calculate distance from external occulter/field stop center
+        # NOTE: Workaround for DR1 data where fs_*cen keywords may not be correctly defined.
+        # In DR1, fs_xcen and fs_ycen sometimes equal crpix1 and crpix2, which is incorrect.
+        # When this occurs, use sun_xcen and sun_ycen as the external occulter center instead.
+        # This workaround may be removed in future data releases if fs_*cen is corrected.
+        if self.meta["fs_xcen"] == self.meta["crpix1"] and self.meta["fs_ycen"] == self.meta["crpix2"]:
+            ### DR1 workaround: use sun center instead; For the DR1 data fs_*cen keywords are not defined correctly
+            out_xcen = self.meta["sun_xcen"]
+            out_ycen = self.meta["sun_ycen"]
+        else:
+            # Normal case: use field stop center
+            out_xcen = self.meta["fs_xcen"]
+            out_ycen = self.meta["fs_ycen"]
+
+        dist_outcen = np.sqrt((xx - out_xcen) ** 2 + (yy - out_ycen) ** 2)
+        # Apply masks
         self.data[dist_inncen <= inn_fov] = mask_val
         self.data[dist_outcen >= out_fov] = mask_val
-
+        # Update plot normalization after masking
         self.update_plot_norm_settings()
 
     def mask_bad_pix(self, qmat, mask_val=np.nan):
         """
         Mask bad-quality pixels in the Metis image.
 
+        This method modifies the data array in-place, setting bad-quality
+        pixels to the specified mask value based on the provided quality matrix.
+
         Parameters
         ----------
         qmat : `numpy.ndarray`
-            Pixel quality matrix with the size of original image and the
-            following values: ``1`` - linear range (good-quality), ``0`` -
-            close to 0 counts/close to saturation (bad-quality) and ``np.nan`` -
-            0 count/saturated pixels (bad-quality).
+            Pixel quality matrix with the same shape as the image data.
+            Expected values:
+            - ``1`` : linear range (good-quality pixels)
+            - ``0`` : close to 0 counts or close to saturation (bad-quality)
+            - ``np.nan`` : exactly 0 count or saturated pixels (bad-quality)
         mask_val : `float`, optional
-            The values of masked pixels. Default is ``np.nan``.
+            The value to assign to masked bad pixels. Default is ``np.nan``.
+
+        Raises
+        ------
+        ValueError
+            If the quality matrix shape does not match the data shape.
+        TypeError
+            If qmat is not a numpy array.
+
+        Notes
+        -----
+        This method directly modifies ``self.data`` in-place. The plot
+        normalization settings are automatically updated after masking.
 
         """
-
+        # Validate input type
+        if not isinstance(qmat, np.ndarray):
+            raise TypeError(f"qmat must be a numpy.ndarray, got {type(qmat).__name__}")
+        # Validate shape compatibility
         if qmat.shape != self.data.shape:
-            warnings.warn('Warning: Pixel quality matrix and the METISMap data have different size. Exiting mask_bad_pix method...')
-            return
+            raise ValueError(
+                f"Pixel quality matrix shape {qmat.shape} does not match "
+                f"METISMap data shape {self.data.shape}. Cannot apply mask."
+            )
+        # Create mask: keep only pixels with value 1 (good quality)
         qmat_mask = qmat == 1
         self.data[~qmat_mask] = mask_val
+        # Update plot normalization after masking
         self.update_plot_norm_settings()
 
     def _get_cmap_name(self):
@@ -323,31 +401,30 @@ class METISMap(GenericMap):
         Returns
         -------
         cmap_string : `str`
-            Name of the Metis data product.
+            Name of the colormap for this Metis data product, formatted as
+            'solo{instrument}{prodtype}' in lowercase.
 
         """
 
-        cmap_string = '{obsv}{instr}{prod}'.format(
-            obsv='solo',  # self.observatory, # self.observatory.replace(' ', '_'),
-            instr=self.instrument,
-            prod=self.prodtype
-        )
+        cmap_string = f"solo{self.instrument}{self.prodtype}"
         cmap_string = cmap_string.lower()
         return cmap_string
 
     def get_img_vlim(self):
         """
-        Return the intensity limits of the Metis image.
+        Return the intensity limits of the Metis image based on the contrast cutoff.
+
+        Uses asymmetric percentile intervals to determine appropriate vmin and vmax
+        values that exclude outliers while preserving the dynamic range of the data.
 
         Returns
         -------
         `tuple` : `(float, float)`
-            The minimum and maximum intensity values
+            The minimum and maximum intensity values for display, calculated
+            using the contrast cutoff percentage.
 
         """
 
-        vlim = AsymmetricPercentileInterval(
-            self.contr_cut*100, (1-self.contr_cut)*100
-        ).get_limits(self.data)
+        vlim = AsymmetricPercentileInterval(self.contr_cut * 100, (1 - self.contr_cut) * 100).get_limits(self.data)
 
         return vlim
