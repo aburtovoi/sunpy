@@ -331,10 +331,10 @@ class METISMap(GenericMap):
         dist_inncen = np.sqrt((xx - in_xcen) ** 2 + (yy - in_ycen) ** 2)
 
         # Calculate distance from external occulter/field stop center
-        # NOTE: Workaround for DR1 data where fs_*cen keywords may not be correctly defined.
-        # In DR1, fs_xcen and fs_ycen sometimes equal crpix1 and crpix2, which is incorrect.
+        # NOTE: Workaround for DR1 data where fs_*cen keywords are not correctly defined.
+        # In DR1, fs_xcen and fs_ycen are not available and as consequence are assigned to crpix1 and crpix2, respectively.
         # When this occurs, use sun_xcen and sun_ycen as the external occulter center instead.
-        # This workaround may be removed in future data releases if fs_*cen is corrected.
+        # This problem is solved in DR2.
         if self.meta["fs_xcen"] == self.meta["crpix1"] and self.meta["fs_ycen"] == self.meta["crpix2"]:
             # DR1 workaround: use sun center instead; For the DR1 data fs_*cen keywords are not defined correctly
             out_xcen = self.meta["sun_xcen"]
