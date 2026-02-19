@@ -83,7 +83,7 @@ class EUIMap(GenericMap):
 
 class METISMap(GenericMap):
     """
-    Metis Image Map
+    Metis Image Map.
 
     Metis is the multi-wavelength coronagraph on board the Solar Orbiter mission,
     dedicated to the study of the solar corona. It observes the outer atmosphere
@@ -111,9 +111,9 @@ class METISMap(GenericMap):
     def __init__(self, data, header, **kwargs):
         """
         Initialize the METISMap class with the provided data and header.
+
         Validate that the header contains the required parameters.
         """
-
         if "RSUN_OBS" in header or "SOLAR_R" in header or "RADIUS" in header:
             pass
         else:
@@ -138,7 +138,6 @@ class METISMap(GenericMap):
             Name of the Metis data product.
 
         """
-
         btype_suff_dict = {
             "VL total brightness": ("-TB", "-TB"),
             "VL polarized brightness": ("-PB", "-PB"),
@@ -167,6 +166,7 @@ class METISMap(GenericMap):
 
     @property
     def prodtype(self):
+        """Product type identifier for this METIS data."""
         return self._prodtype
 
     @prodtype.setter
@@ -206,6 +206,7 @@ class METISMap(GenericMap):
 
     @property
     def contr_cut(self):
+        """Contrast cutoff value for intensity scaling."""
         return self._contr_cut
 
     @contr_cut.setter
@@ -231,8 +232,10 @@ class METISMap(GenericMap):
 
     def update_plot_norm_settings(self):
         """
-        Updates vmin and vmax values of plot_settings['norm'] based on current
-        data and contrast cutoff.
+        Update vmin and vmax values of plot_settings['norm'].
+
+        Updates the plot normalization settings based on current data and
+        contrast cutoff.
         """
         img_vlim = self.get_img_vlim()
         self.plot_settings["norm"] = ImageNormalize(vmin=img_vlim[0], vmax=img_vlim[1])
@@ -333,7 +336,7 @@ class METISMap(GenericMap):
         # When this occurs, use sun_xcen and sun_ycen as the external occulter center instead.
         # This workaround may be removed in future data releases if fs_*cen is corrected.
         if self.meta["fs_xcen"] == self.meta["crpix1"] and self.meta["fs_ycen"] == self.meta["crpix2"]:
-            ### DR1 workaround: use sun center instead; For the DR1 data fs_*cen keywords are not defined correctly
+            # DR1 workaround: use sun center instead; For the DR1 data fs_*cen keywords are not defined correctly
             out_xcen = self.meta["sun_xcen"]
             out_ycen = self.meta["sun_ycen"]
         else:
@@ -405,7 +408,6 @@ class METISMap(GenericMap):
             'solo{instrument}{prodtype}' in lowercase.
 
         """
-
         cmap_string = f"solo{self.instrument}{self.prodtype}"
         cmap_string = cmap_string.lower()
         return cmap_string
@@ -424,7 +426,6 @@ class METISMap(GenericMap):
             using the contrast cutoff percentage.
 
         """
-
         vlim = AsymmetricPercentileInterval(self.contr_cut * 100, (1 - self.contr_cut) * 100).get_limits(self.data)
 
         return vlim
